@@ -1,3 +1,3 @@
 #pragma once
 
-void qemu_exit(int status);
+extern "C" void qemu_exit(int status);

@@ -53,9 +53,9 @@ $(B)/%.o: %.cc | $(B)
 	$(CXX) $(CXXFLAGS) -I. -MMD -MP -MF $(B)/$*.d -c -o $@ $<
 
 # Link
-$(B)/$(TARGET).elf: script-aarch64.ld $(OBJS)
+$(B)/$(TARGET).elf: link.ld $(OBJS)
 	@echo "linking    $@"
-	$(LD) -T script-aarch64.ld -o $@ $(OBJS)
+	$(LD) -T link.ld -o $@ $(OBJS)
 
 # Binary image
 $(B)/$(TARGET).bin: $(B)/$(TARGET).elf
