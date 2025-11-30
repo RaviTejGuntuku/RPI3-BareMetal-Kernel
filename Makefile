@@ -10,12 +10,14 @@ KERNEL_BIN = kernel/build/kernel8.bin
 all: $(KERNEL_BIN)
 
 $(KERNEL_BIN):
-	$(MAKE) -C kernel
+	$(MAKE) -C kernel CROSS=$(CROSS)
 
 run: all
-	# Run the kernel under QEMU with semihosting enabled
-	$(QEMU) -M virt -cpu cortex-a53 -m 128M -nographic \
-	        -semihosting \
+	# Emulate Raspberry Pi 3B board and memory map
+	$(QEMU) -M raspi3b \
+	        -cpu cortex-a53 \
+	        -m 1G \
+	        -nographic \
 	        -kernel $(KERNEL_BIN)
 
 clean:

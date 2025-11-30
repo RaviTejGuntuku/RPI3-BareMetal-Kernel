@@ -2,21 +2,22 @@
 #include "uart.h"
 #include "debug.h"
 
-// This is the symbol start.S calls, so it MUST be extern "C"
+// static void uart_puts(Uart &uart, const char *s)
+// {
+//     while (*s)
+//         uart.put(*s++);
+// }
+
 extern "C" void kernelInit(void)
 {
-
     Uart uart;
+    // uart_puts(uart, "Hello world!\n");
 
-    const char *s = "Hello from C++ kernel_main()\n";
-    while (*s)
-    {
-        uart.put(*s++);
-    }
+    Debug::init(&uart);
+    Debug::debugAll = false;
 
-    // uart.puts("Hello from C++ kernel_main()\n");
+    Debug::printf("Hello world from debug.printf\n");
 
-    // Let start.S handle what happens after return
-    // (it will drop into the WFE loop)
-    return;
+    while (1)
+        asm volatile("wfe");
 }

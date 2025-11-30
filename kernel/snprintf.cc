@@ -63,6 +63,7 @@
 #define VA_SHIFT(v, t) ; /* no-op for ANSI */
 #define VA_END va_end(ap)
 
+// We changed long double to double to make snprintf.cc work
 #define LDOUBLE double
 
 // int snprintf (char *str, long count, const char *fmt, ...);

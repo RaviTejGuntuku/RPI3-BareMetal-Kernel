@@ -1,4 +1,4 @@
-# kernel/Makefile (AArch64, C + C++)
+# kernel/Makefile (AArch64, C + C++ for Raspberry Pi 3, STRICT)
 
 B       := build
 TARGET  := kernel8
@@ -11,13 +11,16 @@ OBJCOPY := $(CROSS)-objcopy
 
 UTCS_OPT ?= -O2   # or -O3 if you want
 
+# Common warning flags, very strict
+WARN    := -Wall -Werror
+
 CFLAGS   := -std=gnu11 -ffreestanding -nostdlib -nostartfiles \
-            -Wall -Wextra $(UTCS_OPT) -g \
+            $(WARN) $(UTCS_OPT) -g \
             -mcpu=cortex-a53 -march=armv8-a
 
 CXXFLAGS := -std=c++20 -ffreestanding -nostdlib -nostartfiles \
             -fno-exceptions -fno-rtti -fno-threadsafe-statics \
-            -Wall -Wextra $(UTCS_OPT) -g \
+            $(WARN) $(UTCS_OPT) -g \
             -mcpu=cortex-a53 -march=armv8-a
 
 # Sources
@@ -37,10 +40,10 @@ all: $(B)/$(TARGET).bin
 $(B):
 	@mkdir -p $(B)
 
-# Assembly
+# Assembly (use GCC driver so warnings apply too)
 $(B)/%.o: %.S | $(B)
 	@echo "assembling $<"
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -x assembler-with-cpp -c -o $@ $<
 
 # C
 $(B)/%.o: %.c | $(B)
@@ -52,12 +55,12 @@ $(B)/%.o: %.cc | $(B)
 	@echo "compiling  $<"
 	$(CXX) $(CXXFLAGS) -I. -MMD -MP -MF $(B)/$*.d -c -o $@ $<
 
-# Link
+# Link (RPi3: link.ld should set . = 0x80000 and ENTRY(_start))
 $(B)/$(TARGET).elf: link.ld $(OBJS)
 	@echo "linking    $@"
 	$(LD) -T link.ld -o $@ $(OBJS)
 
-# Binary image
+# Binary image (what QEMU -kernel and real RPi3 firmware expect)
 $(B)/$(TARGET).bin: $(B)/$(TARGET).elf
 	@echo "objcopy    $@"
 	$(OBJCOPY) -O binary $< $@
