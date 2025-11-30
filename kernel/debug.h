@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include "io.h"
 #include "stdint.h"
-// #include "atomic.h"
+#include "atomic.h"
 
 class Debug
 {
@@ -12,7 +12,7 @@ class Debug
     static OutputStream<char> *sink;
 
 public:
-    // static Atomic<uint32_t> checks;
+    static Atomic<uint32_t> checks;
     static bool shutdown_called;
     static bool debugAll;
     static void vprintf(const char *fmt, va_list ap);
@@ -25,7 +25,7 @@ public:
     static void missing(const char *file, int line);
     inline static void check(bool invariant, const char *invariant_text, const char *file, int line)
     {
-        // checks.fetch_add(1);
+        checks.fetch_add(1);
         if (!invariant)
         {
             panic("*** Check [%s] failed at %s:%d\n", invariant_text, file, line);

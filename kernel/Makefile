@@ -6,7 +6,6 @@ TARGET  := kernel8
 CROSS   ?= aarch64-elf
 CC      := $(CROSS)-gcc
 CXX     := $(CROSS)-g++
-LD      := $(CROSS)-ld
 OBJCOPY := $(CROSS)-objcopy
 
 UTCS_OPT ?= -O2   # or -O3 if you want
@@ -14,14 +13,21 @@ UTCS_OPT ?= -O2   # or -O3 if you want
 # Common warning flags, very strict
 WARN    := -Wall -Werror
 
-CFLAGS   := -std=gnu11 -ffreestanding -nostdlib -nostartfiles \
+# Compile-only flags
+CFLAGS   := -std=gnu11 -ffreestanding \
             $(WARN) $(UTCS_OPT) -g \
             -mcpu=cortex-a53 -march=armv8-a
 
-CXXFLAGS := -std=c++20 -ffreestanding -nostdlib -nostartfiles \
+CXXFLAGS := -std=c++20 -ffreestanding \
             -fno-exceptions -fno-rtti -fno-threadsafe-statics \
             $(WARN) $(UTCS_OPT) -g \
             -mcpu=cortex-a53 -march=armv8-a
+
+# Linker flags: no libc or crt, but we'll still pull in libgcc manually
+LDFLAGS := -nostdlib -nostartfiles -T link.ld
+
+# Ask the cross-compiler where libgcc lives
+LIBGCC := $(shell $(CC) $(UTCS_OPT) -print-libgcc-file-name)
 
 # Sources
 SFILES   := start.S machine.S
@@ -55,10 +61,10 @@ $(B)/%.o: %.cc | $(B)
 	@echo "compiling  $<"
 	$(CXX) $(CXXFLAGS) -I. -MMD -MP -MF $(B)/$*.d -c -o $@ $<
 
-# Link (RPi3: link.ld should set . = 0x80000 and ENTRY(_start))
+# Link (RPi3: link.ld sets . = 0x80000)
 $(B)/$(TARGET).elf: link.ld $(OBJS)
 	@echo "linking    $@"
-	$(LD) -T link.ld -o $@ $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBGCC)
 
 # Binary image (what QEMU -kernel and real RPi3 firmware expect)
 $(B)/$(TARGET).bin: $(B)/$(TARGET).elf

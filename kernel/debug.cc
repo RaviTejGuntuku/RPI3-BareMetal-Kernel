@@ -1,32 +1,27 @@
-// debug.cc
 #include "debug.h"
 #include "libk.h"
 #include "machine.h"
-// #include "smp.h"
-// #include "config.h"
-// #include "kernel.h"
-// #include "atomic.h"
+#include "atomic.h"
 
 OutputStream<char> *Debug::sink = 0;
 bool Debug::debugAll = false;
 bool Debug::shutdown_called = false;
-// Atomic<uint32_t> Debug::checks{0};
-
-// Temporarily disable locking for AArch64 bring-up.
-// static SpinLock lock{};
+Atomic<uint32_t> Debug::checks{0};
 
 void Debug::init(OutputStream<char> *sink)
 {
     Debug::sink = sink;
 }
 
+static SpinLock lock{};
+
 void Debug::vprintf(const char *fmt, va_list ap)
 {
     if (sink)
     {
-        // lock.lock();
+        lock.lock();
         K::vsnprintf(*sink, 1000, fmt, ap);
-        // lock.unlock();
+        lock.unlock();
     }
 }
 
@@ -38,39 +33,40 @@ void Debug::printf(const char *fmt, ...)
     va_end(ap);
 }
 
-// static Atomic<bool> showed_checks{false};
+static Atomic<bool> showed_checks{false};
 
 void Debug::shutdown()
 {
-    // if (!showed_checks.exchange(true))
-    // {
-    //     if (checks.get() > 0)
-    //     {
-    //         printf("*** passed %d checkes\n", checks.get());
-    //     }
-    // }
-    printf("| shutting down\n");
+    if (!showed_checks.exchange(true))
+    {
+        if (checks.get() > 0)
+        {
+            printf("*** passed %d checkes\n", checks.get());
+        }
+    }
+    printf("shutdown called\n");
     shutdown_called = true;
     while (true)
     {
         qemu_exit(0);
-        // outb(0xf4, 0x00);
-        // asm volatile("pause");
     }
+    // printf("| system shutdown\n");
+    // while (true) asm volatile ("hlt");
 }
 
 [[noreturn]]
 void Debug::vpanic(const char *fmt, va_list ap)
 {
-    // lock.unlock(); // things are going bad, force unlock
+    lock.unlock(); // things are going bad, force unlock
     vprintf(fmt, ap);
-    printf("| shutting down\n");
+    printf("| processor halting\n");
     shutdown_called = true;
     while (true)
     {
         qemu_exit(0);
-        // asm volatile("pause");
     }
+    // printf("| system shutdown\n");
+    // while (true) asm volatile ("hlt");
 }
 
 [[noreturn]]
