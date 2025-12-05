@@ -17,6 +17,7 @@ run: all
 	$(QEMU) -M raspi3b \
 	        -cpu cortex-a53 \
 	        -m 1G \
+			-smp 4 \
 	        -nographic \
 	        -kernel $(KERNEL_BIN)
 
