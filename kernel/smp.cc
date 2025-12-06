@@ -42,28 +42,36 @@ void SMP::init(bool isFirst)
 
 extern "C" void secondary_entry(); // from start.S
 
+static inline volatile uint64_t *spin_table_entry_for_cpu(uint32_t cpu)
+{
+    if (cpu == 0)
+        return nullptr;
+
+    const uint64_t base = 0xE0;
+    return reinterpret_cast<volatile uint64_t *>(base + 8ull * (cpu - 1u));
+}
+
 void SMP::startOthers()
 {
-    Debug::printf("| SMP::startOthers() using PSCI\n");
+    Debug::printf("| SMP::startOthers() using Pi3 spin-table\n");
 
     uint32_t this_id = me();
+    uint64_t entry = reinterpret_cast<uint64_t>(&secondary_entry);
 
     for (uint32_t cpu = 0; cpu < 4; ++cpu)
     {
         if (cpu == this_id)
             continue;
 
-        uint64_t target_mpidr = cpu;
-        uint64_t entry = reinterpret_cast<uint64_t>(&secondary_entry);
+        volatile uint64_t *slot = spin_table_entry_for_cpu(cpu);
+        if (!slot)
+            continue;
 
-        int ret = psci_cpu_on(target_mpidr, entry, 0);
-        if (ret != 0)
-        {
-            Debug::printf("|   psci_cpu_on(cpu=%u) failed: %d\n", cpu, ret);
-        }
-        else
-        {
-            Debug::printf("|   psci_cpu_on(cpu=%u) ok\n", cpu);
-        }
+        Debug::printf("|   starting cpu%u at entry=0x%lx\n", cpu, entry);
+
+        *slot = entry;
+
+        asm volatile("dsb sy" ::: "memory");
+        asm volatile("sev" ::: "memory");
     }
 }

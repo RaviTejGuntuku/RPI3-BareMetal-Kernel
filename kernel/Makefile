@@ -30,7 +30,7 @@ LDFLAGS := -nostdlib -nostartfiles -T link.ld
 LIBGCC := $(shell $(CC) $(UTCS_OPT) -print-libgcc-file-name)
 
 # Sources
-SFILES   := start.S machine.S
+SFILES   := start.S machine.S psci.S
 CFILES   := $(wildcard *.c)
 CXXFILES := $(wildcard *.cc)
 
