@@ -160,10 +160,7 @@ public:
     inline void unlock() {}
 };
 
-// Forward-declared in atomic.cc
 extern "C" void pause();
-
-// --- Interrupts stub for now (no-op on bare-metal RPi until you wire real IRQs) ---
 
 class Interrupts
 {
@@ -194,8 +191,6 @@ public:
     }
 };
 
-// --- SpinLock using Atomic<bool> and AArch64-friendly wait ---
-
 class SpinLock
 {
     Atomic<bool> taken{false};
@@ -205,7 +200,6 @@ public:
     SpinLock(const SpinLock &) = delete;
     SpinLock &operator=(const SpinLock &) = delete;
 
-    // for debugging, etc. Allows false positives
     bool isMine()
     {
         return taken.get();
@@ -215,23 +209,17 @@ public:
     {
         while (true)
         {
-            // Try to acquire the lock: was it previously false?
             if (!taken.exchange(true))
             {
-                // Got it
                 return;
             }
-
-            // Failed to acquire, back off a bit
-            iAmStuckInALoop(true); // use WFE
+            iAmStuckInALoop(true);
         }
     }
 
     void unlock()
     {
-        // Release the lock
         taken.set(false);
-        // Wake up potential waiters (optional, but nice when we add SEV)
         asm volatile("sev" ::: "memory");
     }
 

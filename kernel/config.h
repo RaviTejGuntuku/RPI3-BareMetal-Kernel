@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MAX_PROCS 16 // Pi 3B: 4 cores, but 16 = default max
+#define MAX_PROCS 4 // Pi3b = 4 cores
 
 struct Config
 {

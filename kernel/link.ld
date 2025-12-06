@@ -33,6 +33,7 @@ SECTIONS
     .bss (NOLOAD) : {
         . = ALIGN(16);
         __bss_start = .;
+        *(.bss.bootstack)     /* include boot stack in BSS */
         *(.bss .bss.*)
         *(COMMON)
         __bss_end = .;

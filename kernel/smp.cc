@@ -1,15 +1,11 @@
 #include "smp.h"
 #include "debug.h"
-#include "psci.h"
 #include <stdint.h>
 
 Atomic<uint32_t> SMP::running{0};
 
 const char *SMP::names[MAX_PROCS] = {
-    "cpu0", "cpu1", "cpu2", "cpu3",
-    "cpu4", "cpu5", "cpu6", "cpu7",
-    "cpu8", "cpu9", "cpu10", "cpu11",
-    "cpu12", "cpu13", "cpu14", "cpu15"};
+    "cpu0", "cpu1", "cpu2", "cpu3"};
 
 static inline uint32_t read_mpidr()
 {
@@ -58,7 +54,7 @@ void SMP::startOthers()
     uint32_t this_id = me();
     uint64_t entry = reinterpret_cast<uint64_t>(&secondary_entry);
 
-    for (uint32_t cpu = 0; cpu < 4; ++cpu)
+    for (uint32_t cpu = 0; cpu < 5; ++cpu)
     {
         if (cpu == this_id)
             continue;
