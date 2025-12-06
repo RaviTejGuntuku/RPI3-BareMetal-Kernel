@@ -6,6 +6,7 @@
 #include "smp.h"
 #include "atomic.h"
 #include "heap.h"
+#include "crt.h"
 
 struct Stack
 {
@@ -88,6 +89,8 @@ extern "C" void kernelInit(void)
 
         Debug::init(new Uart);
         Debug::printf("| switched to new UART\n");
+
+        CRT::init();
 
         // launch other cores
         SMP::init(true);
